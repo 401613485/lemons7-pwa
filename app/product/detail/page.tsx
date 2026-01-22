@@ -41,16 +41,26 @@ const ProductDetailContent = () => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [expanded, setExpanded] = useState(false);
   const [showAiDrawer, setShowAiDrawer] = useState(false);
+  const [aiAnalysis, setAiAnalysis] = useState({
+    score: productData.aiAnalysis.marketScore,
+    report: {
+      copyright: '未检测到侵权',
+      policy: '建议优化描述'
+    }
+  });
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analysisError, setAnalysisError] = useState<string | null>(null);
 
   // 从 URL 参数获取数据
   const demoPrice = searchParams.get('price');
   const demoInventory = searchParams.get('inventory');
   const demoSku = searchParams.get('sku');
   const demoDesc = searchParams.get('desc');
+  const demoTitle = searchParams.get('title');
 
   // 构建实际显示的数据
   const displayData = {
-    name: demoSku ? `Product - ${demoSku}` : productData.name,
+    name: demoTitle || (demoSku ? `Product - ${demoSku}` : productData.name),
     price: demoPrice ? parseFloat(demoPrice) : productData.price,
     stock: demoInventory ? parseInt(demoInventory) : productData.stock,
     stockStatus: demoInventory && parseInt(demoInventory) > 0 ? '库存充足' : productData.stockStatus,
@@ -66,8 +76,45 @@ const ProductDetailContent = () => {
     setExpanded(!expanded);
   };
 
-  const handleGenerateAiReport = () => {
-    setShowAiDrawer(true);
+  const handleGenerateAiReport = async () => {
+    setIsAnalyzing(true);
+    setAnalysisError(null);
+    
+    try {
+      const response = await fetch('/api/ai/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          prompt: displayData.description,
+          type: 'compliance_check'
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error(`API Error: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      // 更新 AI 分析结果
+      setAiAnalysis({
+        score: data.score || productData.aiAnalysis.marketScore,
+        report: data.report || {
+          copyright: '未检测到侵权',
+          policy: '建议优化描述'
+        }
+      });
+      
+      setShowAiDrawer(true);
+    } catch (error) {
+      console.error('AI 分析失败:', error);
+      setAnalysisError('AI 分析失败，请稍后重试');
+      setShowAiDrawer(true);
+    } finally {
+      setIsAnalyzing(false);
+    }
   };
 
   const handleNextStep = () => {
@@ -180,16 +227,19 @@ const ProductDetailContent = () => {
       {/* 底部核心操作区 */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-3">
         <button
-          className="w-full bg-green-500 text-white font-medium py-4 px-4 rounded-lg flex items-center justify-center space-x-2 hover:bg-green-600 transition-colors"
+          className="w-full bg-green-500 text-white font-medium py-4 px-4 rounded-lg flex items-center justify-center space-x-2 hover:bg-green-600 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
           onClick={handleGenerateAiReport}
+          disabled={isAnalyzing}
         >
-          <span>生成 AI 分析报告 (Step 3)</span>
-          <motion.div
-            animate={{ x: [0, 5, 0] }}
-            transition={{ repeat: Infinity, duration: 1.5 }}
-          >
-            <ArrowRight size={18} />
-          </motion.div>
+          <span>{isAnalyzing ? 'AI 分析中...' : '生成 AI 分析报告 (Step 3)'}</span>
+          {!isAnalyzing && (
+            <motion.div
+              animate={{ x: [0, 5, 0] }}
+              transition={{ repeat: Infinity, duration: 1.5 }}
+            >
+              <ArrowRight size={18} />
+            </motion.div>
+          )}
         </button>
       </div>
 
@@ -225,6 +275,13 @@ const ProductDetailContent = () => {
                 </button>
               </div>
 
+              {/* 错误提示 */}
+              {analysisError && (
+                <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+                  <p className="text-sm text-red-600">{analysisError}</p>
+                </div>
+              )}
+
               {/* 市场脉搏 */}
               <div className="mb-8">
                 <h4 className="text-base font-medium text-gray-900 mb-4">市场脉搏</h4>
@@ -250,11 +307,11 @@ const ProductDetailContent = () => {
                         stroke="#10B981"
                         strokeWidth="12"
                         strokeLinecap="round"
-                        strokeDasharray={`${(productData.aiAnalysis.marketScore / 100) * 351.86} 351.86`}
+                        strokeDasharray={`${(aiAnalysis.score / 100) * 351.86} 351.86`}
                       />
                     </svg>
                     <div className="absolute inset-0 flex flex-col items-center justify-center">
-                      <span className="text-2xl font-bold text-gray-900">{productData.aiAnalysis.marketScore}</span>
+                      <span className="text-2xl font-bold text-gray-900">{aiAnalysis.score}</span>
                       <span className="text-sm text-gray-500">/100</span>
                     </div>
                   </div>
@@ -270,14 +327,14 @@ const ProductDetailContent = () => {
                     <CheckCircle size={20} className="text-green-500 mr-3 mt-0.5" />
                     <div>
                       <span className="text-sm font-medium text-gray-900">版权安全</span>
-                      <p className="text-sm text-gray-600">未检测到侵权</p>
+                      <p className="text-sm text-gray-600">{aiAnalysis.report.copyright}</p>
                     </div>
                   </div>
                   <div className="flex items-start">
                     <AlertTriangle size={20} className="text-yellow-500 mr-3 mt-0.5" />
                     <div>
                       <span className="text-sm font-medium text-gray-900">政策提示</span>
-                      <p className="text-sm text-gray-600">建议优化描述</p>
+                      <p className="text-sm text-gray-600">{aiAnalysis.report.policy}</p>
                     </div>
                   </div>
                 </div>

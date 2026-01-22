@@ -65,35 +65,38 @@ const CreateProductPage = () => {
     });
   };
 
-  const handleGenerateProductPage = () => {
+  const handleGenerateProductPage = async () => {
     setIsGenerating(true);
     
-    // 模拟 AI 生成过程
-    setTimeout(() => {
-      // 自动生成临时 Title
-      const tempTitle = `New Product - ${Date.now()}`;
-      
-      // 准备提交的数据
-      const submitData = {
-        title: tempTitle,
-        raw_input: formData.description,
-        sku: formData.sku,
-        price: formData.price,
-        stock: formData.stock,
-        leadTime: formData.leadTime,
-        images: images,
-      };
-      
-      // 这里可以添加实际的 API 调用逻辑
-      console.log('Submitting product data:', submitData);
-      
-      // 跳转到产品详情页预览结果
+    try {
+      const rawInput = formData.description;
       const price = formData.price;
       const inventory = formData.stock;
       const sku = formData.sku;
-      const rawInput = formData.description;
-      router.push(`/product/detail?price=${price}&inventory=${inventory}&sku=${sku}&desc=${encodeURIComponent(rawInput)}`);
-    }, 2500);
+      
+      // 调用 AI 生成 API
+      const response = await fetch('/api/ai/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prompt: rawInput,
+          type: 'product_copy'
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error('API request failed');
+      }
+      
+      const data = await response.json();
+      
+      // 跳转到产品详情页预览结果
+      router.push(`/product/detail?price=${price}&inventory=${inventory}&sku=${sku}&title=${encodeURIComponent(data.title)}&desc=${encodeURIComponent(data.description)}`);
+    } catch (error) {
+      console.error('Error generating product:', error);
+      alert('生成失败，请稍后重试');
+      setIsGenerating(false);
+    }
   };
 
   return (
@@ -286,7 +289,7 @@ const CreateProductPage = () => {
           {isGenerating ? (
             <>
               <RefreshCw size={18} className="animate-spin" />
-              <span>AI 正在构建主图与文案...</span>
+              <span>AI 正在思考 (Calling Gemini)...</span>
             </>
           ) : (
             <>

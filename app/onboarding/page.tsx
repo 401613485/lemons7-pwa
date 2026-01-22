@@ -66,7 +66,7 @@ const Onboarding = () => {
   const handleCompleteStep1 = () => {
     // 模拟保存数据
     setTimeout(() => {
-      router.push('/dashboard');
+      router.push('/product/create');
       // 这里可以添加 Toast 提示，但需要额外的 Toast 组件
     }, 500);
   };
