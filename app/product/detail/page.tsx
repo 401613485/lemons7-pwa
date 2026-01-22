@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import {
@@ -35,7 +35,7 @@ const productData = {
   },
 };
 
-const ProductDetailPage = () => {
+const ProductDetailContent = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -336,4 +336,10 @@ const X = ({ size = 24, className = '' }) => (
   </svg>
 );
 
-export default ProductDetailPage;
+export default function ProductDetail() {
+  return (
+    <Suspense fallback={<div className="p-6 text-center">Loading product...</div>}>
+      <ProductDetailContent />
+    </Suspense>
+  );
+}

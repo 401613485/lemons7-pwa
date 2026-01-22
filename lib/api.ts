@@ -44,6 +44,14 @@ export interface CreateCampaignData {
   budget: number;
 }
 
+export interface Product {
+  id: string;
+  title: string;
+  image: string;
+  price: number;
+  卖点: string;
+}
+
 // Create a new campaign
 export const createCampaign = async (data: CreateCampaignData): Promise<AdCampaign> => {
   // In a real app, this would be an API call to Supabase
@@ -70,7 +78,7 @@ export const createCampaign = async (data: CreateCampaignData): Promise<AdCampai
 export const fetchCampaigns = async (): Promise<AdCampaign[]> => {
   // In a real app, this would be an API call to Supabase
   // For now, we'll return the mock data
-  return mockAdCampaigns;
+  return mockAdCampaigns as AdCampaign[];
 };
 
 // Update campaign status
@@ -87,5 +95,5 @@ export const updateCampaignStatus = async (id: string, status: 'active' | 'pause
     status,
   };
 
-  return mockAdCampaigns[campaignIndex];
+  return mockAdCampaigns[campaignIndex] as AdCampaign;
 };

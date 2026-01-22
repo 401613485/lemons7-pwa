@@ -12,33 +12,34 @@ import {
   Clock,
   Zap,
 } from 'lucide-react';
+import { Product } from '../../lib/api';
 
 // Mock 商品数据
 const mockProducts = [
   {
     id: '1',
-    name: 'Bluetooth Speaker',
+    title: 'Bluetooth Speaker',
     image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=portable%20bluetooth%20speaker%20on%20white%20background&image_size=square',
     price: 45.99,
     卖点: '防水设计，360度环绕音，24小时续航',
   },
   {
     id: '2',
-    name: 'Lumina Smart Desk Lamp',
+    title: 'Lumina Smart Desk Lamp',
     image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=modern%20smart%20desk%20lamp%20on%20white%20background&image_size=square',
     price: 89.99,
     卖点: '智能调光，护眼模式，APP控制',
   },
   {
     id: '3',
-    name: 'Fitness Tracker Pro',
+    title: 'Fitness Tracker Pro',
     image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=fitness%20tracker%20smartwatch%20on%20wrist&image_size=square',
     price: 59.99,
     卖点: '心率监测，睡眠分析，50米防水',
   },
   {
     id: '4',
-    name: 'Portable Charger 20000mAh',
+    title: 'Portable Charger 20000mAh',
     image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=portable%20power%20bank%2020000mah%20slim%20design&image_size=square',
     price: 29.99,
     卖点: '快充技术，大容量，多设备兼容',
@@ -75,7 +76,7 @@ const VideosPage = () => {
   const [videos, setVideos] = useState(initialVideos);
   const [showProductPicker, setShowProductPicker] = useState(false);
   const [showAiGeneration, setShowAiGeneration] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [aiProgress, setAiProgress] = useState(0);
   const [aiStatus, setAiStatus] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
@@ -95,7 +96,7 @@ const VideosPage = () => {
   };
 
   // 选择商品
-  const handleSelectProduct = (product) => {
+  const handleSelectProduct = (product: Product) => {
     setSelectedProduct(product);
   };
 
@@ -110,6 +111,7 @@ const VideosPage = () => {
 
   // 开始 AI 生成
   const startAiGeneration = () => {
+    if (!selectedProduct) return;
     setIsGenerating(true);
     setAiProgress(0);
     setAiStatus(aiStatusMessages[0]);
@@ -126,14 +128,14 @@ const VideosPage = () => {
             // 添加新生成的视频到列表
             const newVideo = {
               id: Date.now().toString(),
-              title: `${selectedProduct.name} - AI Generated Video`,
+              title: `${selectedProduct.title} - AI Generated Video`,
               cover: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=video%20thumbnail%20ai%20generated%20product%20video&image_size=square',
-              product: selectedProduct.name,
+              product: selectedProduct.title,
               status: 'published',
             };
             setVideos([newVideo, ...videos]);
             // 显示 Toast 通知
-            setToastMessage(`视频已生成，已关联至 ${selectedProduct.name}`);
+            setToastMessage(`视频已生成，已关联至 ${selectedProduct.title}`);
             setShowToast(true);
             setTimeout(() => setShowToast(false), 3000);
           }, 500);
@@ -246,12 +248,12 @@ const VideosPage = () => {
                       <div className="w-16 h-16 rounded-md overflow-hidden flex-shrink-0">
                         <img
                           src={product.image}
-                          alt={product.name}
+                          alt={product.title}
                           className="w-full h-full object-cover"
                         />
                       </div>
                       <div className="ml-3 flex-1">
-                        <h4 className="font-medium text-gray-900">{product.name}</h4>
+                        <h4 className="font-medium text-gray-900">{product.title}</h4>
                         <p className="text-sm text-gray-500 mt-1">{product.卖点}</p>
                         <p className="text-sm font-medium text-gray-900 mt-1">${product.price}</p>
                       </div>
@@ -322,12 +324,12 @@ const VideosPage = () => {
                       <div className="w-16 h-16 rounded-md overflow-hidden flex-shrink-0">
                         <img
                           src={selectedProduct?.image}
-                          alt={selectedProduct?.name}
+                          alt={selectedProduct?.title}
                           className="w-full h-full object-cover"
                         />
                       </div>
                       <div className="ml-3 flex-1">
-                        <h4 className="font-medium text-gray-900">{selectedProduct?.name}</h4>
+                        <h4 className="font-medium text-gray-900">{selectedProduct?.title}</h4>
                         <p className="text-sm text-gray-500 mt-1">{selectedProduct?.卖点}</p>
                       </div>
                     </div>
